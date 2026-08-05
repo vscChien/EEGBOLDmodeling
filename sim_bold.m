@@ -31,7 +31,7 @@ function y=sim_bold(z, plotOn,dt)
 
 
     switch 2
-        case 1 % Friston2000
+        case 1 % Friston et al. (2000)
             % -----parameters----- 
             % rCBF component (linear)
             epsi    = 0.5;
@@ -42,7 +42,8 @@ function y=sim_bold(z, plotOn,dt)
             tau0    = 1;    % mean transit time
             alpha0  = 0.2;  % stiffness exponent
             V0      = 0.02; % resting blood volume fraction
-        case 2 % https://github.com/neurolib-dev/neurolib/blob/master/neurolib/models/bold/timeIntegration.py
+        case 2 % Friston, Harrison & Penny (2003)
+            % https://github.com/neurolib-dev/neurolib/blob/master/neurolib/models/bold/timeIntegration.py
             % -----parameters----- 
             % rCBF component (linear)
             epsi    = 1e-3;%0.5;
