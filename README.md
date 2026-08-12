@@ -32,7 +32,7 @@ The scripts are organized so that each is named after the figure it reproduces.
 | Fig S7 | Population-level firing rates and power spectra | `figS7.m`|
 | Fig S8–S9 | Effect of external input variability on EEG-BOLD correlation | `figS8_batch.m` → `figS8.m`; `figS9.m`|
 | Fig S10 | BOLD responses to selective stimulation of interneuron subtypes | `figS10.m`, `figS10_scan.m` |
-| Fig S11 | Group-level alpha-BOLD correlation map, masked by statistical significance |  |
+| Fig S11 | Group-level alpha-BOLD correlation map, masked by statistical significance | `data/figS11/*.m` |
 > **Note:** Some scripts depend on outputs from earlier steps. For example, `fig3.m`, `figS3.m`, `figS8.m`, and `figS9.m` require `data/fig2_kmeans8.mat` (produced by `fig2.m`) to be present.
 
 
