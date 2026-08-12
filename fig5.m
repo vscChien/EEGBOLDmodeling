@@ -1,362 +1,260 @@
-
+% >> fig5_batch(); % run simulations and save result.
+% >> fig5();   % plot fig5, fig6, figS7
+%
 function fig5()
 
-    % input conditions
-    cond(1).Ilat_range=[4.5,4.5];
-    cond(1).Imod_range=[0,2];
-    cond(1).Itha_range=[0,2];
-
-    cond(2).Ilat_range=[4.5,4.5];
-    cond(2).Imod_range=[12.5,14.5];
-    cond(2).Itha_range=[0,2];    
-
-    cond(3).Ilat_range=[4.5,4.5];
-    cond(3).Imod_range=[16,18];
-    cond(3).Itha_range=[0,2];  
-
-
-    %------ plot input conditions ------
-    plot_fig5a(cond);
-
-    %------ plot single trial ------
-    % load random-walk input
-    [input,duration,dt]=load_input();  
-
-    % check saved result
-    noiseLevel=1;
-    resultfilename=fullfile('data',sprintf('fig5_result_10min_noise=%g.mat',noiseLevel));    
-    if exist(resultfilename,'file')
-        fprintf('Loading %s...',resultfilename);
-        load(resultfilename);
-        fprintf('done.\n');
-    else
-        nConds= length(cond); 
-        nRuns = 100; 
-        %----------record---------------
-        all_r_alphaEnvHrfds_simBOLDds = zeros(nConds,nRuns);
-        all_r_alphaEnvHrfbp_simBOLDbp = zeros(nConds,nRuns);
-        all_r_gammaEnvHrfds_simBOLDds = zeros(nConds,nRuns);
-        all_r_gammaEnvHrfbp_simBOLDbp = zeros(nConds,nRuns);
-        all_r_alphaEnv_x = zeros(nConds,nRuns);
-        all_r_gammaEnv_x = zeros(nConds,nRuns);
-        all_r_rate=zeros(nConds,19,19,nRuns); % correlation of rates
-        %---------------------------------
-        for c=1:nConds
-            for run =1:nRuns 
-                fprintf('run%d/%d...cond%d/%d...\n',run,nRuns,c,nConds)
-                r = simulation(input(:,:,run),duration,dt,noiseLevel,...
-                               cond(c).Ilat_range,cond(c).Imod_range,cond(c).Itha_range,0);
-                all_r_alphaEnv_x(c,run) = r.r_alphaEnv_x; 
-                all_r_gammaEnv_x(c,run) = r.r_gammaEnv_x; 
-                all_r_alphaEnvHrfds_simBOLDds(c,run) = r.r_alphaEnvHrfds_simBOLDds;
-                all_r_alphaEnvHrfbp_simBOLDbp(c,run) = r.r_alphaEnvHrfbp_simBOLDbp;
-                all_r_gammaEnvHrfds_simBOLDds(c,run) = r.r_gammaEnvHrfds_simBOLDds;
-                all_r_gammaEnvHrfbp_simBOLDbp(c,run) = r.r_gammaEnvHrfbp_simBOLDbp;
-                all_r_rate(c,:,:,run)=r.r_rate;
-            
-            end % nRuns
-        end % nConds
-        
-        save(resultfilename,'all_r_alphaEnv_x','all_r_gammaEnv_x',...
-                               'all_r_alphaEnvHrfds_simBOLDds','all_r_alphaEnvHrfbp_simBOLDbp',...
-                               'all_r_gammaEnvHrfds_simBOLDds','all_r_gammaEnvHrfbp_simBOLDbp',...
-                               'all_r_rate','cond','noiseLevel');
-    end
+    %---------------------------------------
+    % load power spectrum (rate and psp)
+    % all_pop_spect 2805x17x2501
+    % all_psp_spect 2805x17x2501
+    % all_rate_mean 2805x17
+    % all_rate_std 2805x17
+    % all_spect 2805x2501
+    % freq 1x2501
+    % rangeA [5,6,7,8,9]/2
+    % rangeB (0:50)/2;
+    % rangeC (0:10)/2;
+    % baseline
+    resultname=fullfile('data','fig5_batch_result.mat');
+    fprintf('Loading %s...',resultname);
+    load(resultname);
+    disp('done.')
+    bl=baseline;
+    %---------------------------------------
+    % load EEG-BOLD correlation (constant input condition) 
+    % all_r_gammaEnvHrfbp_simBOLDbp 2805 x 100
+    % all_r_alphaEnvHrfbp_simBOLDbp 2805 x 100
+    load(fullfile('data','fig3_batch_result.mat'));
+    r_alphaBOLD=mean(all_r_alphaEnvHrfbp_simBOLDbp,2); % 2805 x 1
+    r_gammaBOLD=mean(all_r_gammaEnvHrfbp_simBOLDbp,2); % 2805 x 1
+    %---------------------------------------
+    load(fullfile('data','fig2_kmeans8.mat'),'tag','k'); 
     
-    plot_histogram(cond, all_r_alphaEnvHrfbp_simBOLDbp,all_r_gammaEnvHrfbp_simBOLDbp,'fig5C.png');
-
-    plotOn=1; rmbase=1;
-    for i=1:3
-        simulation(input(:,:,1),duration,dt,noiseLevel,cond(i).Ilat_range,cond(i).Imod_range,cond(i).Itha_range,plotOn,rmbase,sprintf('fig5B_%d.png',i));
-    end
+    %--------calculate spatial correlation---------
+    r_EEG_PSP = spatial_correlation(all_spect,all_psp_spect,bl,freq,tag,k);
+    % --------plot-------------
+    plot_r(r_EEG_PSP,all_spect,bl.spect,freq,tag,k,'fig5.png'); 
+    plot_rr(r_alphaBOLD,all_pop_spect,freq,all_rate_mean,all_rate_std,[-1 1]*0.6,'fig6A.png'); %alpha-BOLD
+    plot_rr(r_gammaBOLD,all_pop_spect,freq,all_rate_mean,all_rate_std,[-1 1]*0.7,'fig6B.png'); %gamma-BOLD
+    plot_1x17_map(all_rate_std,rangeA,rangeB,rangeC,'figS7A_std.png'); 
+    plot_1x17_map(all_rate_mean,rangeA,rangeB,rangeC,'figS7A_mean.png'); 
+    plot_5x17_map(all_psp_spect,bl.spect_psp,freq,rangeA,rangeB,rangeC,'figS7C.png'); %psp
+    plot_5x17_map(all_pop_spect,bl.spect_pop,freq,rangeA,rangeB,rangeC,'figS7B.png'); %rate
 
 end
+
+
+
 %==========================================================================
-function plot_histogram(cond, all_r_alphaEnvHrfbp_simBOLDbp,all_r_gammaEnvHrfbp_simBOLDbp,filename)
+% spect [N x freq]; N conditions in tagi
+function [spect,freq]=get_spect(all_spect,baseline_spect,freq,tag,tagi)
+    spect=all_spect-repmat(baseline_spect',[size(all_spect,1),1]); % remove baseline
+    spect=spect(:,freq>=0 & freq<=50);  
+    spect=spect(tag==tagi,:);
+    freq=freq(freq>=0 & freq<=50);
+end
+%==========================================================================
+% spect [N x 17 x freq]
+function [spect,freq]=get_psp_spect(all_psp_spect,baseline_spect0,freq,tag,tagi)
+    baseline_spect=permute(baseline_spect0,[3 2 1]);
+    spect=all_psp_spect-repmat(baseline_spect,[size(all_psp_spect,1),1]); % remove baseline
+    spect=spect(:,:,freq>=0 & freq<=50);
+    spect=spect(tag==tagi,:,:);
+    freq=freq(freq>=0 & freq<=50);  
+end
+
+%==========================================================================
+function plot_r(r,all_spect,baseline_spect,freq,tag,k,filename)
+
+    yticklabeltext={'E2/3','E4','E5ET','E5IT','E6','P2/3','P4','P5','P6','S2/3','S4','S5','S6','V2/3','V4','V5','V6'};
+
+    idx=[1,6,10,14,...
+         2,7,11,15,...
+         3,4,8,12,16,...
+         5,9,13,17];
+    figure;
+    t=tiledlayout(6,4,'TileSpacing','compact','Padding','loose');
+    for tagi=1:k
+        %--------spectrum----
+        if tagi<=4, nexttile(tagi);else,nexttile(tagi+8);end
+        [target,fs] = get_spect(all_spect,baseline_spect,freq,tag,tagi); % [N x freq]
+        plot(fs,target,'color',[1,1,1]*0.7); hold on; 
+        plot(fs,mean(target),'k');
+        title(sprintf('Cluster %d',tagi));xlim([0 50])
         
-        figure;
-        t=tiledlayout(1,3,'TileSpacing','compact','Padding','loose');
-        for i=1:length(cond)
-            nexttile();
-            histogram(all_r_alphaEnvHrfbp_simBOLDbp(i,:),-1:0.05:1,'Normalization','probability');hold on; 
-            histogram(all_r_gammaEnvHrfbp_simBOLDbp(i,:),-1:0.05:1,'Normalization','probability');           
-            xlim([-1 1]);ylim([0 0.5]);
-            plot([0;0],ylim,'k');
-             
+        plot([1;1]*[4,8,12,30],ylim,'k'); 
+        plot(xlim,[0;0],'k');
+        if ismember(tagi,[1,5]),ylabel('Power (dB)');end  
+        set(gca,'xtick',[2.5,5.5,10,20,40],'xticklabel',...
+                 {'$\delta$','$\theta$','$\alpha$','$\beta$','$\gamma$'},'TickLabelInterpreter', 'latex',...
+                'fontsize',8,'FontName', 'calibri')
+        %--------correlation----
+        if tagi<=4, nexttile(tagi+4,[2 1]);else,nexttile(tagi+12,[2 1]);end
+        imagesc(fs,1:17,r(idx,:,tagi));clim([-1 1]);
+        set(gca,'ytick',1:17,'yticklabel',yticklabeltext(idx),...
+             'xtick',0:10:50,'xticklabel',0:10:50,'fontsize',8,'FontName', 'calibri');
+        xlabel('Frequency (Hz)');
+        if ismember(tagi,[1,5]),ylabel('Populations');end
+        hold on; plot([1;1]*[4,8,12,30],ylim,'k'); 
+        plot(xlim,[1;1]*[4.5,8.5,13.5],'k'); 
 
-            mean_r_alpha=mean(all_r_alphaEnvHrfbp_simBOLDbp(i,:));
-            mean_r_gamma=mean(all_r_gammaEnvHrfbp_simBOLDbp(i,:));
-            plot([1;1]*mean_r_alpha,ylim,'b');
-            plot([1;1]*mean_r_gamma,ylim,'r');
-            title(sprintf('Case %d:',i))
-            text(round(mean_r_alpha,2)-0.22,0.3,sprintf('$r_{\\alpha}$=%g',round(mean_r_alpha,2)),...
-                'color','b','fontsize',8,'FontName','calibri','Interpreter','latex');
-            text(min(0.25,round(mean_r_gamma,2)-0.22),0.4,sprintf('$r_{\\gamma}$=%g',round(mean_r_gamma,2)),...
-                'color','r','fontsize',8,'FontName','calibri','Interpreter','latex');
-
-
-
-            if i~=1,set(gca,'yticklabel',[]);end
-            title(sprintf('Case %d',i));
-            set(gca,'fontsize',8,'FontName','calibri')
-        end      
-        xlabel(t,'Correlation','fontsize',10,'FontName', 'calibri'); 
-        ylabel(t,'Probability','fontsize',10,'FontName', 'calibri');
-        legend({'Alpha-BOLD','Gamma-BOLD'},'NumColumns', 1,'Location','southoutside'...
-                ,'fontsize',8,'FontName', 'calibri')
-
-        width=15; 
-        height=6;
-        set(gcf,'units','centimeters','position',[2 2 width height])
-        saveas(gcf,fullfile('figures',filename));
+    end
+    colormap(coolwarm);
+    colorbar('position',[0.92 0.12 0.01 0.1]);
+    width=20; 
+    height=20;
+    set(gcf,'units','centimeters','position',[2 2 width height])
+    saveas(gcf,fullfile('figures',filename));
 end
 
 %==========================================================================
-function plot_single_trial(simMEG,simBOLD_bp,alpha_env_hrf_bp,gamma_env_hrf_bp,...
-                           time_discard,time_ds,time,dt,Iext,rmbase,filename)
+function plot_rr(r_alphaBOLD,all_pop_spect,freq,all_rate_mean,all_rate_std,ylimits,filename)
 
+    xticklabeltext={'E2/3','E4','E5ET','E5IT','E6','P2/3','P4','P5','P6','S2/3','S4','S5','S6','V2/3','V4','V5','V6'};
+    idx=[1,6,10,14,...
+         2,7,11,15,...
+         3,4,8,12,16,...
+         5,9,13,17];
+
+    r1 = corr(r_alphaBOLD,all_rate_mean(:,idx));
+    r2 = corr(r_alphaBOLD,all_rate_std(:,idx));
+    r3 = zeros(17,2501);
+    for i=1:17
+        r3(i,:) = corr(r_alphaBOLD,squeeze(all_pop_spect(:,idx(i),:)));
+    end
     figure;
     t=tiledlayout(3,1,'TileSpacing','compact','Padding','loose');
-    nexttile();
-    plot(time,Iext(1,:),'linewidth',1);hold on; grid on;
-    plot(time,Iext(14,:),'linewidth',1); 
-    plot(time,Iext(2,:),'linewidth',1); 
-    xlim(time_discard); ylim([0 20])
-    legend('I_{lat}','I_{mod}','I_{tha}','location','northeastoutside');
-    ylabel('Rate (Hz)');title('Input')
-    set(gca,'fontsize',8,'FontName','calibri','xticklabel',[])
-    
-    
-    nexttile();
-    [S,F,T] = spectrogram(simMEG-mean(simMEG),2000,1000,2000,1/dt);
-    tmp=10*log(abs(S));
-    if rmbase % remove baseline
-        load(fullfile('data','fig5_baseline.mat'),'baseline');
-        tmp=tmp-repmat(baseline,[1, size(tmp,2)]);
-    else % remove mean
-        tmp=tmp-repmat(mean(tmp,2),[1, size(tmp,2)]);   
-    end
-    mvstep=10; 
-    tmp_m = movmean(tmp,mvstep,2);
-    imagesc(T,F,tmp_m);set(gca,'ydir','normal');
-    ylim([0.5 50]);xlim(time_discard);
-    clim([-1 1]*25);
-    colormap(jet);
-    pos=get(gca,'position');
-    colorbar('position',[0.92 pos(2)+0.02 0.01 0.15]); 
-    hold on;plot(xlim,[1;1]*[10,40],'k:'); 
-    ylabel('Freq (Hz)');title('Spectrogram')
-    set(gca,'fontsize',8,'FontName','calibri','xticklabel',[],...
-            'ytick',0:10:50,'yticklabel',0:10:50)
-
-    nexttile();
-    plot(time_ds,zscore(alpha_env_hrf_bp),'linewidth',1); hold on;grid on;
-    plot(time_ds,zscore(gamma_env_hrf_bp),'linewidth',1); 
-    plot(time_ds,zscore(simBOLD_bp),'linewidth',1); 
-    xlim(time_discard);
-    legend('Alpha','Gamma','BOLD','location','northeastoutside');
-
-    ylabel('z-score');
-    title(sprintf('$r_{\\alpha} = %g;\\; r_{\\gamma} = %g$',...
-                            round(corr(simBOLD_bp',alpha_env_hrf_bp'),2),...
-                            round(corr(simBOLD_bp',gamma_env_hrf_bp'),2)),'Interpreter','latex');
-    xlabel('Time (sec)');ylim([-3 3])
-    set(gca,'fontsize',8,'FontName','calibri')
-
+    nexttile
+    bar([r1;r2]');xlim([0.5 17.5]);ylim(ylimits)
+    ylabel('Correlation');
+    hold on;plot([1;1]*[4.5,8.5,13.5],ylim,'k'); 
+    legend({'r_{mean}','r_{std}'},'location','northoutside')
+    set(gca,'xtick',1:17,'xticklabel',xticklabeltext(idx),'fontsize',8,'FontName', 'calibri');
+ 
+    nexttile([2 1])
+    imagesc(1:17,freq,r3');ylim([0 50]);clim([-1 1]*max(abs(r3(:))));
+    set(gca,'ytick',[2.5,5.5,10,20,40],'yticklabel',...
+                 {'$\delta$','$\theta$','$\alpha$','$\beta$','$\gamma$'},'TickLabelInterpreter', 'latex',...
+                 'xtick',1:17,'xticklabel',xticklabeltext(idx),'fontsize',8,'FontName', 'calibri');
+    hold on; plot(xlim,[1;1]*[4,8,12,30],'k'); 
+    plot([1;1]*[4.5,8.5,13.5],ylim,'k'); 
+    colormap(coolwarm);
+    colorbar('position',[0.92 0.12 0.02 0.2]);
     width=10; 
-    height=9;
+    height=10;
     set(gcf,'units','centimeters','position',[2 2 width height])
-    saveas(gcf,fullfile('figures',filename));   
-end
-
-%==========================================================================
-function r=simulation(input,duration,dt,noiseLevel,Ilat_range,Imod_range,Itha_range,plotOn,rmbase,filename)
-
-    dt2      = 1;     % downsampled time step (sec)
-    time_discard=[200 duration-50]; 
-    % Input weights (to 17 populations)
-    Ilat = [1; %to E2/3
-            0; %to E4
-            0; %to E5ET
-            0; %to E5IT
-            0; %to E6
-            0; %to PV2/3 
-            0; %to PV4
-            0; %to PV5
-            0; %to PV6
-            1; %to SOM2/3
-            0; %to SOM4
-            0; %to SOM5
-            0; %to SOM6
-            0; %to VIP2/3 
-            0; %to VIP4    
-            0; %to VIP5 
-            0];%to VIP6 
-    
-    Imod = [0; %to E2/3
-            0; %to E4
-            0; %to E5ET
-            0; %to E5IT
-            0; %to E6
-            0; %to PV2/3 
-            0; %to PV4
-            0; %to PV5
-            0; %to PV6
-            0; %to SOM2/3
-            0; %to SOM4
-            0; %to SOM5
-            0; %to SOM6
-            1; %to VIP2/3 
-            0; %to VIP4    
-            0; %to VIP5 
-            0];%to VIP6 
-    
-    Itha = [0; %to E2/3
-            1; %to E4
-            0; %to E5ET
-            0; %to E5IT
-            0; %to E6
-            0; %to PV2/3 
-            1; %to PV4
-            0; %to PV5
-            0; %to PV6
-            0; %to SOM2/3
-            0; %to SOM4
-            0; %to SOM5
-            0; %to SOM6
-            0; %to VIP2/3 
-            0; %to VIP4    
-            0; %to VIP5 
-            0];%to VIP6 
-
-    Iext  = Ilat*rescale(input(:,1),Ilat_range(1),Ilat_range(2))' + ...
-            Imod*rescale(input(:,2),Imod_range(1),Imod_range(2))' + ...
-            Itha*rescale(input(:,3),Itha_range(1),Itha_range(2))'; 
-
-    % Connectivity W
-    [W,C,~,nP,nE,nPV,nSOM,nVIP]=get_W17(0);
-    g  = 20*1e3; 
-    W = [W*g, ones(nP,1)*1e3];
-    
-    
-    % Synaptic time constants
-    tau = get_tau(nP,nE,nPV,nSOM,nVIP);
-    
-    % Sigmoid functions
-    sigmParam = get_sigmParam(nE,nPV,nSOM,nVIP);
-    
-    [rate, time, PSP] = model_jr(W, tau, sigmParam, Iext, noiseLevel, dt);
-    [simEEG, simBOLD, x] = sim_eeg_bold(PSP,time,nE,nPV,nSOM,nVIP,nP,C,dt);
-     simEEG=sum(simEEG,1);
-
-
-    %------ filtering ------
-    alpha = filter_bp(simEEG,[8 12],1/dt); % alpha
-    alpha_env = abs(hilbert(alpha));       % amplitude of alpha
-    alpha_env_hrf = sim_bold(alpha_env);   % generate BOLD
-
-    gamma = filter_bp(simEEG,[35 45],1/dt); % gamma
-    gamma_env = abs(hilbert(gamma));        % amplitude of gamma
-    gamma_env_hrf = sim_bold(gamma_env);    % generate BOLD
-
-    %------ correlation (rate) ------
-    %-----power spectrum-----
-    tidx=find(time>time_discard(1) & time<=time_discard(2)); 
-    tmp=[rate;simEEG;x];
-    r_rate=corr(tmp(:,tidx)');
-
-    %-----downsample----- 
-    time_ds=0:dt2:duration;
-    simBOLD_ds=interp1(time(tidx),simBOLD(tidx),time_ds);
-    alpha_env_hrf_ds=interp1(time(tidx),alpha_env_hrf(tidx),time_ds);
-    gamma_env_hrf_ds=interp1(time(tidx),gamma_env_hrf(tidx),time_ds);
-    %
-    time_ds(isnan(simBOLD_ds))=[];
-    simBOLD_ds(isnan(simBOLD_ds))=[];
-    alpha_env_hrf_ds(isnan(alpha_env_hrf_ds))=[];
-    gamma_env_hrf_ds(isnan(gamma_env_hrf_ds))=[];
-    %-----bandpass-----
-    BPorder=2;
-    simBOLD_bp = filter_bp(simBOLD_ds,[0.008 0.09],1/dt2,BPorder); 
-    alpha_env_hrf_bp = filter_bp(alpha_env_hrf_ds,[0.008 0.09],1/dt2,BPorder); 
-    gamma_env_hrf_bp = filter_bp(gamma_env_hrf_ds,[0.008 0.09],1/dt2,BPorder); 
-    % -----record-----
-    tidx2=find(time_ds>time_discard(1) & time_ds<=time_discard(2));
-    r.r_alphaEnv_x = corr(x(tidx)',alpha_env(tidx)'); 
-    r.r_gammaEnv_x = corr(x(tidx)',gamma_env(tidx)'); 
-    r.r_alphaEnvHrfds_simBOLDds = corr(simBOLD_ds(tidx2)',alpha_env_hrf_ds(tidx2)');
-    r.r_alphaEnvHrfbp_simBOLDbp = corr(simBOLD_bp(tidx2)',alpha_env_hrf_bp(tidx2)');
-    r.r_gammaEnvHrfds_simBOLDds = corr(simBOLD_ds(tidx2)',gamma_env_hrf_ds(tidx2)');
-    r.r_gammaEnvHrfbp_simBOLDbp = corr(simBOLD_bp(tidx2)',gamma_env_hrf_bp(tidx2)');
-    r.r_rate=r_rate;
-
-    if plotOn
-        plot_single_trial(simEEG,simBOLD_bp,alpha_env_hrf_bp,gamma_env_hrf_bp,...
-                          time_discard,time_ds,time,dt,Iext,rmbase,filename);
-    end
+    saveas(gcf,fullfile('figures',filename));
 
 end
-
 %==========================================================================
-% load random-walk input
-function [input,duration,dt]=load_input()
+function plot_5x17_map(data0,baseline0,freq,rangeA,rangeB,rangeC,filename)
+  
+    ttext={'E2/3','E4','E5ET','E5IT','E6','PV2/3','PV4','PV5','PV6','SOM2/3','SOM4','SOM5','SOM6','VIP2/3','VIP4','VIP5','VIP6'};   
+    idx=[1,6,10,14,...
+         2,7,11,15,...
+         3,4,8,12,16,...
+         5,9,13,17];
 
-    speed    = 5; 
-    mvwindow=0*1e3; 
-    inputfilename=fullfile('data',sprintf('randWalk_input_speed%d_mv%d.mat',speed,mvwindow/1e3)); 
-    if exist(inputfilename,'file')
-        fprintf('Loading %s...',inputfilename);
-        load(inputfilename);
-        fprintf('done.\n');
-    else
-        fprintf('Generating rand inputs...\n');
-        duration = 600; % sec
-        dt       = 0.001;
-        nTrials=100;        
-        input=zeros(duration/dt,3,nTrials); % [time x {I_lat,I_mod,I_tha} x trials]
-        for i=1:3
-            for j=1:nTrials
-                input(:,i,j)=gen_randwalk_input(duration,dt,speed)';                                     
+    frange=[30,50;...  % gamma
+            13,30;...  % beta
+            8,12; ...  % alpha
+            4,7;...    % theta
+            0.5,4];    % delta
+    baseline=permute(baseline0,[3 2 1]); % 2805 x 17 x 2501
+    data=data0-repmat(baseline,[size(data0,1),1]); % remove baseline
+    figure;
+    t = tiledlayout(size(frange,1),17,'TileSpacing','compact','Padding','loose');
+    width=24; 
+    height=8;
+    set(gcf,'units','centimeters','position',[2 2 width height])
+    for f=1:size(frange,1) 
+        fband=mean(data(:,:,freq>=frange(f,1) & freq<=frange(f,2)),3);
+        fband=reshape(fband,[length(rangeA),length(rangeB),length(rangeC),17]);
+        tmp=squeeze(fband(end,:,:,:)); %[51x11x17]
+        for pop=1:17
+            nexttile()
+            tmp=squeeze(fband(end,:,:,idx(pop))); %[51x11] 
+            imagesc(rangeB,rangeC,tmp'); 
+            text(1,2,sprintf('%g',round(max(tmp(:)),2)),...
+                'color','w','fontsize',7,'FontName','calibri');
+            text(1,0.5,sprintf('%g',round(min(tmp(:)),2)),...
+                'color','w','fontsize',7,'FontName','calibri');
+
+            set(gca,'ydir','normal','fontsize',8,'FontName', 'calibri')
+            axis square
+            if f==1, title(ttext{idx(pop)});end
+            if f~=size(frange,1) || pop~=1
+                set(gca,'xticklabel',[],'yticklabel',[]);
+            else
+                xlabel('I_{mod}','fontsize',8,'FontName', 'calibri')
+                ylabel('I_{tha}','fontsize',8,'FontName', 'calibri')
             end
-        end
-        if mvwindow>0 % smooth input
-            for i=1:3
-                for j=1:nTrials
-                    input(:,i,j)=movmean(input(:,i,j),mvwindow);
-                end
-            end
-        end
-        fprintf('Saving %s...',inputfilename);
-        save(inputfilename,'input','duration','dt','speed','nTrials','mvwindow');
-        fprintf('done.\n');
+        end 
+        
     end
+    pos=get(gca,'position');
+    hc=colorbar('position',[pos(1)+pos(3)+0.005 pos(2) 0.005 0.08],'ytick',[]); title(hc,'dB')
+    saveas(gcf,fullfile('figures',filename));
 end
 
 %==========================================================================
-function plot_fig5a(cond)
+function plot_1x17_map(data0,rangeA,rangeB,rangeC,filename)
+
+    data=reshape(data0,length(rangeA),length(rangeB),length(rangeC),[]); 
+    data=squeeze(data(rangeA==4.5,:,:,:)); 
+    ttext={'E2/3','E4','E5ET','E5IT','E6','PV2/3','PV4','PV5','PV6','SOM2/3','SOM4','SOM5','SOM6','VIP2/3','VIP4','VIP5','VIP6'};
+    idx=[1,6,10,14,...
+         2,7,11,15,...
+         3,4,8,12,16,...
+         5,9,13,17];
+
 
     figure;
-    t=tiledlayout(1,1,'TileSpacing','compact','Padding','loose');    
-    load(fullfile('data','fig2_kmeans8.mat'),'k','tag','rangeA','rangeB','rangeC','As'); 
-    tag=reshape(tag,size(As));
-    nexttile();
-    imagesc(rangeB,rangeC,squeeze(tag(ismember(rangeA,4.5),:,:))');clim([0 k]+0.5);
-    set(gca,'ydir','normal','fontsize',8,'FontName', 'calibri', ...
-        'xtick',0:5:25,'xticklabel',0:5:25)
-    xlabel('I_{mod}');ylabel('I_{tha}')
-    title(sprintf('I_{lat} = %g',rangeA(ismember(rangeA,4.5))));
-    colormap(brewermap(k,'Paired'))
-    hold on;
-    for i=1:length(cond)
-            rectangle('Position',[cond(i).Imod_range(1),...
-                                  cond(i).Itha_range(1),...
-                                  diff(cond(i).Imod_range),...
-                                  diff(cond(i).Itha_range)],'LineWidth',1,'EdgeColor','k')
-    end
-
-    colorbar('ytick',1:k,'yticklabel',1:k);
-    width=7; 
-    height=5.5;
+    t=tiledlayout(1,17,'TileSpacing','compact','Padding','loose');
+    width=24; 
+    height=8;
     set(gcf,'units','centimeters','position',[2 2 width height])
-    saveas(gcf,fullfile('figures','fig5A.png'));
+    
+    for pop=1:17
+
+        nexttile(); 
+        tmp=data(:,:,idx(pop))';
+        imagesc(rangeB,rangeC,tmp);hold on; 
+        text(1,2,sprintf('%g',round(max(tmp(:)),2)),...
+                'color','w','fontsize',7,'FontName','calibri');
+        text(1,0.5,sprintf('%g',round(min(tmp(:)),2)),...
+                'color','w','fontsize',7,'FontName','calibri');
+        set(gca,'ydir','normal','fontsize',8,'FontName', 'calibri')
+        if pop~=1
+            set(gca,'yticklabel',[],'xticklabel',[]);
+        else
+            xlabel('I_{mod}','fontsize',8,'FontName', 'calibri')
+            ylabel('I_{tha}','fontsize',8,'FontName', 'calibri')
+        end           
+        title(ttext{idx(pop)})
+        axis('square')
+
+        pos=get(gca,'position');
+    end
+    pos=get(gca,'position');
+    hc=colorbar('position',[pos(1)+pos(3)+0.005 pos(2) 0.005 0.08],'ytick',[]); title(hc,'Hz')
+    saveas(gcf,fullfile('figures',filename));
+end
+
+%==========================================================================
+function r = spatial_correlation(all_spect,all_psp_spect,bl,freq,tag,k)
+
+    %----- spatial correlation (spect_EEG,spect_PSP)-----
+    r = zeros(17,251,8); %[pops x freqs x clusters]
+    for tagi=1:k         
+        [target,fs] = get_spect(all_spect,bl.spect,freq,tag,tagi);        % spect_EEG  
+        regressors = get_psp_spect(all_psp_spect,bl.spect_psp,freq,tag,tagi); % spect_PSP
+        for p=1:17
+            for f=1:length(fs)
+                y=target(:,f);
+                x=regressors(:,p,f);
+                r(p,f,tagi)=corr(y(:),x(:));
+            end
+        end  
+    end
 end

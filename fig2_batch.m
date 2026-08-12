@@ -1,6 +1,7 @@
 % >> fig2_batch(); % run simulations and save result. (will take a couple hours)
-% >> fig2();       % plot fig.2
-%
+% >> fig2();       % plot fig.2 and fig.S1
+% >> figS2();      % plot fig.S2
+
 function fig2_batch()
 
     duration = 600;   % sec per run

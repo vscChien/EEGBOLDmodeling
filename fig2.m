@@ -1,6 +1,7 @@
 % >> fig2_batch(); % run simulations and save result. (will take a couple hours)
-% >> fig2();       % plot fig.2
-%
+% >> fig2();       % plot fig.2 and fig.S1
+% >> figS2();      % plot fig.S2
+
 function fig2()
 
     load(fullfile('data','fig2_batch_result.mat'))
@@ -40,7 +41,7 @@ function fig2()
     
     plot_fig2a(all_spect,spect_baseline,freq,rangeA,rangeB,rangeC,frange);   
     plot_fig2bcd(all_spect,spect_baseline,freq,rangeA,rangeB,rangeC,As,Bs,Cs,frange);
-    plot_fig2_S1(all_spect,freq,As,frange);
+    plot_figS1(all_spect,freq,As,frange);
 
     
 end
@@ -192,7 +193,7 @@ function plot_fig2bcd(all_spect,spect_baseline,freq,rangeA,rangeB,rangeC,As,Bs,C
     
 end
 %==========================================================================
-function plot_fig2_S1(all_spect,freq,As,frange)
+function plot_figS1(all_spect,freq,As,frange)
 
     feature=zeros(numel(As),5);
     for f=1:size(frange,1)
@@ -224,6 +225,6 @@ function plot_fig2_S1(all_spect,freq,As,frange)
     width=10; 
     height=8;
     set(gcf,'units','centimeters','position',[2 2 width height])
-    saveas(gcf,fullfile('figures','fig2_S1.png')); 
+    saveas(gcf,fullfile('figures','figS1.png')); 
 
 end
