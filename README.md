@@ -25,14 +25,14 @@ The scripts are organized so that each is named after the figure it reproduces.
 | Fig 4 | Reproducing the LFP-BOLD correlation from Magri et al. | `fig4.m`|
 | Fig 5 | Relationship between EEG spectra and PSPs | `fig5_batch.m` → `fig5.m`|
 | Fig 6 | Similarity between population activity and alpha/gamma-BOLD correlations | `fig6.m`|
-| S1 Fig | Determining the optimal number of K-means clusters | (part of `fig2.m`) |
-| S2 Fig | Relationship between EEG bands and BOLD (mean/std) | `figS2.m` |
-| S3 Fig | Analysis of dipole effect on EEG-BOLD correlation | `figS3.m` |
-| S4–S6 Fig | Alpha-gamma switching / smooth input / increased lateral input examples | `figS4.m`, `figS5.m`, `figS6.m` |
-| S7 Fig | Population-level firing rates and power spectra | `figS7.m`|
-| S8–S9 Fig | Effect of external input variability on EEG-BOLD correlation | `figS8_batch.m` → `figS8.m`; `figS9.m`|
-| S10 Fig | BOLD responses to selective stimulation of interneuron subtypes | `figS10.m`, `figS10_scan.m` |
-| S11 Fig | Group-level alpha-BOLD correlation map, masked by statistical significance |  |
+| Fig S1 | Determining the optimal number of K-means clusters | (part of `fig2.m`) |
+| Fig S2 | Relationship between EEG bands and BOLD (mean/std) | `figS2.m` |
+| Fig S3 | Analysis of dipole effect on EEG-BOLD correlation | `figS3.m` |
+| Fig S4–S6 | Alpha-gamma switching / smooth input / increased lateral input examples | `figS4.m`, `figS5.m`, `figS6.m` |
+| Fig S7 | Population-level firing rates and power spectra | `figS7.m`|
+| Fig S8–S9 | Effect of external input variability on EEG-BOLD correlation | `figS8_batch.m` → `figS8.m`; `figS9.m`|
+| Fig S10 | BOLD responses to selective stimulation of interneuron subtypes | `figS10.m`, `figS10_scan.m` |
+| Fig S11 | Group-level alpha-BOLD correlation map, masked by statistical significance |  |
 > **Note:** Some scripts depend on outputs from earlier steps. For example, `fig3.m`, `figS3.m`, `figS8.m`, and `figS9.m` require `data/fig2_kmeans8.mat` (produced by `fig2.m`) to be present.
 
 
