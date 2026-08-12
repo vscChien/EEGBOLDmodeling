@@ -33,6 +33,9 @@ The scripts are organized so that each is named after the figure it reproduces.
 | S8–S9 Fig | Effect of external input variability on EEG-BOLD correlation | `figS8_batch.m` → `figS8.m`; `figS9.m`|
 | S10 Fig | BOLD responses to selective stimulation of interneuron subtypes | `figS10.m`, `figS10_scan.m` |
 | S11 Fig | Group-level alpha-BOLD correlation map, masked by statistical significance |  |
+> **Note:** Some scripts depend on outputs from earlier steps. For example, `fig3.m`, `figS3.m`, `figS8.m`, and `figS9.m` require `data/fig2_kmeans8.mat` (produced by `fig2.m`) to be present.
+
+
 
 ## Large files not included in this repository
 
