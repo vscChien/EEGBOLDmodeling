@@ -93,16 +93,16 @@ function plot_histogram(cond, all_r_alphaEnvHrfbp_simBOLDbp,all_r_gammaEnvHrfbp_
             mean_r_gamma=mean(all_r_gammaEnvHrfbp_simBOLDbp(i,:));
             plot([1;1]*mean_r_alpha,ylim,'b');
             plot([1;1]*mean_r_gamma,ylim,'r');
-            title(sprintf('Case %d:',i))
-            text(round(mean_r_alpha,2)-0.22,0.3,sprintf('$r_{\\alpha}$=%g',round(mean_r_alpha,2)),...
+            title(sprintf('Case V%d:',i))
+            text(round(mean_r_alpha,2)-0.22,0.3,sprintf('$\\overline{r_{\\alpha}}$=%g',round(mean_r_alpha,2)),...
                 'color','b','fontsize',8,'FontName','calibri','Interpreter','latex');
-            text(min(0.25,round(mean_r_gamma,2)-0.22),0.4,sprintf('$r_{\\gamma}$=%g',round(mean_r_gamma,2)),...
+            text(min(0.25,round(mean_r_gamma,2)-0.22),0.4,sprintf('$\\overline{r_{\\gamma}}$=%g',round(mean_r_gamma,2)),...
                 'color','r','fontsize',8,'FontName','calibri','Interpreter','latex');
 
 
 
             if i~=1,set(gca,'yticklabel',[]);end
-            title(sprintf('Case %d',i));
+            title(sprintf('Case V%d',i));
             set(gca,'fontsize',8,'FontName','calibri')
         end      
         xlabel(t,'Correlation','fontsize',10,'FontName', 'calibri'); 
